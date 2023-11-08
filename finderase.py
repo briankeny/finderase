@@ -2,6 +2,7 @@ import os
 import sys
 import argparse
 import shutil
+
 # error messaging
 def error_Handler(errmsg):
     print(f"\t Usage: python {sys.argv[0]} -h for help\n")
@@ -13,59 +14,58 @@ def argument_handler():
     parser = argparse.ArgumentParser("FindErase")
 
     parser.add_argument(
-        "target_Folder_or_File", 
+        "-a",
+        "--asset",
         required=True,
-        help="The name of the folder to search for.")
+        help="The name of the folder your searching for. usage  -a FOLDER_OR_FILE or --asset FOLDER_OR_FILE ")
     
     parser.add_argument(
         "-d",
         "--directory",
         default='.',
         required=False,
-        help='The directory to start the search from. Default is the current directory ex -d PATH_TO_DIR or --directory PATH_TO_DIR',
+        help='The directory to start the search from. Default is the current directory. usage  -d PATH_TO_DIR or --directory PATH_TO_DIR',
     )
 
     parser.add_argument(
         "-s",
         "--save",
-        default='example.txt',
+        default=None,
         required=False,
-        help='Save Findings From The Search to a Specified File Name  ex -s findings.txt  or --save results.txt',
+        help='Save Findings From The Search to a Specified File Name. Usage  -s findings.txt  or --save results.txt',
     )
 
 
     parser.add_argument(
         "-r",
         "--rename",
-        type=str,
         default=None,
         required=False,
-        help='The New name you want to rename the target_file or target_folder with ex -r NEW_NAME_TO_DIR or --directory NEW_NAME_TO_FILE',
+        help='The New name you want to rename the target_file or target_folder with. Usage Example  -r NEW_NAME_TO_DIR or --rename NEW_NAME_TO_FILE',
     )
 
     parser.add_argument(
-        "-d",
+        "-del",
         "--delete",
-        type=str,
-        default=False,
+        default=None,
         required=False,
-        help='Give a Delete option to Remove the target_file or target_folder ex -d TARGET_DIR_OR_FILE or --directory TARGET_DIR_OR_FILE',
+        help='Give a Delete option to Remove the target_file or target_folder. Usage Example -del TARGET_DIR_OR_FILE or --delete TARGET_DIR_OR_FILE',
     )
 
     parser.add_argument(
         "-v",
         "--verbose",
-        type=bool,
+        type = bool,
         default=True,
         required=False,
-        help="Disable Verbose Mode to stop printing to the screen while Finding,Renaming Or Deleting Files :ie -v off or --verbose False",
+        help="Disable Verbose Mode to stop printing to the screen while Finding,Renaming Or Deleting Files :Usage Example -v off or --verbose False",
     )
     parser.error = error_Handler
     return parser.parse_args()
 
 
 class FindErase:
-    def __init__(self,target_Folder_or_File, directory, verbose,save, file_name,delete,rename):
+    def __init__(self,target_Folder_or_File="", directory="", verbose=True,save=False, file_name="test.txt",delete=False,rename=False):
         self.verbose = verbose
         self.target = target_Folder_or_File
         self.directory = directory     
@@ -77,25 +77,37 @@ class FindErase:
 
     # Find The Asset File Or Directory
     def asset_Finder(self):
+      
         if self.verbose:
-            print(f"\tBeginning Search For: {self.target}")
+            print(f"\n\tBeginning Search...")
 
         if self.verbose:
-            print(f"\tAttempting Search for folders... {self.target}")
+            print(f"\n\tAttempting Search for {self.target} in folders...")
 
         for root, dirs, files in os.walk(self.directory):
+            # Find in Directories
             if self.target in dirs:
                 folder_path = os.path.join(root,self.target)
                 if self.verbose:
-                    print(f"\n\t\tFound a Match Folder: {folder_path}")
-                if self.save:
-                    self.found_assets.append(folder_path)
+                    print(f"\n\t\t[+]Found a Match Folder: {folder_path}")
+  
+            # Delete the folder if desired
                 if self.delete:
-                    print(f"Deleted Folder: {folder_path}")
+                    print(f"\n\t\t[-]Deleting Folder: {self.target} from path {folder_path}")
                     shutil.rmtree(folder_path)
+                
+                if  self.rename:
+                    print(f"\n\t\t[?]Renaming Folder: {self.target} to {self.file_name}")
+                    new_path = os.path.join(root,self.new_name)
+                    shutil.move(folder_path,new_path)
+                    shutil.rmtree(folder_path)
+                
+                # Update Found List
+                self.found_assets.append(folder_path)
+  
+        if self.verbose:
+            print(f"\n\t[{len(self.found_assets)}] Search Complete...")
 
-            # Add code here to delete the folder if desired
-            # Example: shutil.rmtree(folder_path)
     
     # save results to a file
     def saveResults(self):
@@ -106,27 +118,40 @@ class FindErase:
             with open(str(self.file_name), "wt") as f:
                 for name in self.found_assets:
                     name = f"{name}"
-                    f.write("\n%s" %name)
+                    f.write("\n%s" %(name))
          
 def main():
     args = argument_handler()
+    target_Folder_or_File = args.asset
+    directory = args.directory
     save = args.save
-    action = FindErase()
+    delete = args.delete
+    rename = args.rename
+    verbose = args.verbose
+
+    new_name = ""
+    file_name = "" 
+ 
+    if save and 0 < len(save) < 20:
+        file_name = f'{save}.txt'
+        save = True
     
-    action.nameGenerator()
+
+    if delete and  0 < len(delete) < 20 :
+        delete = True
+
+    if  rename and  len(delete)< 0 and 0 < len(rename) < 20:
+        new_name = rename
+        rename = True
+          
+    action = FindErase(target_Folder_or_File=target_Folder_or_File, directory=directory, verbose=verbose,save=save, file_name=file_name,delete=delete,rename=rename)    
+    action.asset_Finder()
+
     if save:
         action.saveResults()
-    print('\n\t [!] Process Completed With Exiting Status Ok!...')
 
-if __name__ == "__main__":
-    
+    print('\n\t [!] Process Completed With Exiting Status 0 Ok!...\n')
+
+if __name__ == "__main__":    
     main()
-
-
-
-
-
-
-
-
 
