@@ -106,29 +106,31 @@ To use the Folder Search and Delete Tool, follow these steps:
    Call the script
 
    ```bash
-
    finderase  example_folder -del yes
 
 
 4. **Usage --optional**
-   To learn more about usage of finderase.py,
-   type
+   
+
+   To learn more about usage of finderase.py, type
 
 
       ```bash
       finderase -h 
+      
 
       or 
 
       ```bash
       ./finderase --help 
-
+      ```
 
       or if you are running the script directly
 
 
       ```bash
       python finderase.py -h
+      ```
 
 
       The above command will display the usage menu
